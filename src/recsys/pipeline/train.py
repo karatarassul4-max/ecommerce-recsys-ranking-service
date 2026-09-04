@@ -157,10 +157,12 @@ def train_ranker(config: ProjectConfig) -> dict:
 
 def evaluate_artifact(config: ProjectConfig, model_path: str | Path) -> dict:
     model = joblib.load(model_path)
-    test = pd.read_parquet(_split_paths(config)["test"])
+    paths = _split_paths(config)
+    train = pd.read_parquet(paths["train"], columns=["item_id"])
+    test = pd.read_parquet(paths["test"])
     positive_events = list(config.split["positive_events"])
     k = int(config.models["top_k"])
-    catalog = list(getattr(model, "popularity", model).item_scores)
+    catalog = sorted(int(item) for item in train["item_id"].unique())
     results = evaluate_model(model, test, positive_events, catalog, k)
     output = Path("reports/evaluation_metrics.json")
     output.parent.mkdir(exist_ok=True)

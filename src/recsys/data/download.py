@@ -25,6 +25,6 @@ def download_with_kagglehub(kaggle_slug: str, output_dir: str | Path) -> Path:
         raise FileNotFoundError(f"Could not find events.csv under {dataset_path}")
 
     destination = output / "events.csv"
-    if not destination.exists():
+    if not destination.exists() or destination.stat().st_size != events.stat().st_size:
         shutil.copy2(events, destination)
     return destination

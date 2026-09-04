@@ -18,6 +18,12 @@ raw interactions -> preprocessing -> temporal split -> baselines -> two-stage re
 
 This is an implicit-feedback task. The model does not predict ratings; it recommends items based on user behavior.
 
+Full experiment dataset after preprocessing:
+
+| Events | Users | Items | Views | Add-to-cart | Transactions | Period |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1,726,175 | 404,977 | 138,387 | 1,637,186 | 66,603 | 22,386 | 2015-05-03 to 2015-09-18 |
+
 ## ML Task
 
 Recommend top-K items for a user, using only historical interactions available before the evaluation window.
@@ -121,14 +127,37 @@ make mlflow-ui
 
 ## Experiment Results
 
-RetailRocket full-run metrics will be added only after running the real pipeline.
+Full RetailRocket run completed locally with temporal validation/test splitting.
+
+Split summary:
+
+| Split | Events | Time Window |
+| --- | --- | --- |
+| train | 1,428,607 | before 2015-08-21 |
+| validation | 149,921 | 2015-08-21 to 2015-09-04 |
+| test | 147,647 | 2015-09-04 to 2015-09-18 |
+
+Leakage checks:
+
+- train max timestamp before validation: passed
+- validation max timestamp before test: passed
 
 | Run | Split | Model | Precision@10 | Recall@10 | NDCG@10 | MAP@10 | Coverage | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 001 | temporal validation | popularity | - | - | - | - | - | not run yet |
-| 002 | temporal validation | item-kNN | - | - | - | - | - | not run yet |
-| 003 | temporal validation | SVD | - | - | - | - | - | not run yet |
-| 004 | temporal test | two-stage ranker | - | - | - | - | - | not run yet |
+| 001 | validation | popularity | 0.001655 | 0.011670 | 0.009153 | 0.007623 | 0.000249 | completed |
+| 002 | validation | item-kNN | 0.000281 | 0.001270 | 0.000734 | 0.000411 | 0.023230 | completed |
+| 003 | validation | SVD | 0.000140 | 0.000246 | 0.000259 | 0.000173 | 0.033877 | completed |
+| 004 | validation | two-stage ranker | 0.001627 | 0.011766 | 0.005837 | 0.003571 | 0.033301 | completed |
+| 005 | test | popularity | 0.001653 | 0.010394 | 0.008096 | 0.006257 | 0.000249 | completed |
+| 006 | test | item-kNN | 0.000210 | 0.001295 | 0.000829 | 0.000581 | 0.018268 | completed |
+| 007 | test | SVD | 0.000090 | 0.000270 | 0.000175 | 0.000078 | 0.026053 | completed |
+| 008 | test | two-stage ranker | 0.000751 | 0.004479 | 0.002903 | 0.001964 | 0.025446 | completed |
+
+### Result Interpretation
+
+The popularity baseline is the strongest quality baseline in this first full run. This is common in sparse implicit-feedback e-commerce data: many users have short histories, and recent global popularity is a strong signal.
+
+The two-stage ranker improves catalog coverage substantially compared with pure popularity, but loses NDCG/MAP on the test window. That makes it useful as an engineering baseline, not yet as the best production model. The next modeling iteration should add recency features, event-type sequence features, category/item metadata, and stronger validation-time negative sampling.
 
 ## Repository Layout
 
@@ -161,4 +190,3 @@ docker run --rm -p 8000:8000 ecommerce-recsys-ranking-service
 - Model artifacts are serialized as full recommendation pipelines.
 - API returns an explicit empty fallback response when no model artifact is available.
 - CI keeps checks lightweight: linting plus deterministic tests.
-
