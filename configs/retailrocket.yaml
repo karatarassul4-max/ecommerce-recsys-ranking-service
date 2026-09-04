@@ -1,0 +1,38 @@
+project:
+  name: ecommerce-recsys-ranking-service
+  seed: 42
+
+dataset:
+  name: RetailRocket eCommerce
+  source_url: https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset
+  kaggle_slug: retailrocket/ecommerce-dataset
+  raw_dir: data/raw/retailrocket
+  processed_dir: data/processed/retailrocket
+  events_file: data/raw/retailrocket/events.csv
+  min_user_events: 2
+  min_item_events: 2
+  event_weights:
+    view: 1.0
+    addtocart: 3.0
+    transaction: 5.0
+
+split:
+  validation_days: 14
+  test_days: 14
+  positive_events:
+    - addtocart
+    - transaction
+
+models:
+  top_k: 10
+  candidate_k: 100
+  item_knn:
+    max_neighbors: 100
+  svd:
+    n_components: 64
+  ranker:
+    negatives_per_positive: 5
+
+tracking:
+  experiment_name: ecommerce-recsys-ranking
+  tracking_uri: sqlite:///mlflow.db
